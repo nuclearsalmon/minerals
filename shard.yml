@@ -1,0 +1,6 @@
+name: minerals
+version: 1.0.1
+
+crystal: '>= 1.11.2'
+
+license: MIT
