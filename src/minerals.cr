@@ -86,6 +86,25 @@ module Minerals
   macro mncall(obj, *methods)
     { {% for method, _ in methods[...-1] %} {{ method.id.split('.').first }}: {{ obj }}.{{ method }}, {% end %} {{ methods[-1].id.split('.').first }}: {{ obj }}.{{ methods[-1] }} }
   end
+
+  macro mnget(obj, *members)
+    { {% for member, _ in members[...-1] %} {{ member.id.split('.').first }}: {{ obj }}[{{ member.id.stringify }}], {% end %} {{ members[-1].id.split('.').first }}: {{ obj }}[{{ members[-1].id.stringify }}] }
+  end
+
+  macro not_implemented
+    raise ::NotImplementedError.new({% @def.try &.name || @caller.try &.first.try &.name || "" %})
+  end
+
+  def to_json(obj) : String
+    String::Builder.build { |io|
+      builder = JSON::Builder.new(io)
+      builder.start_document
+      builder.indent=2
+      obj.to_json(builder)
+      builder.end_document
+      builder.flush
+    }
+  end
 end
 
 MINERALS_TOPLEVEL = ENV["MINERALS_TOPLEVEL"] ||= ""
