@@ -1,72 +1,11 @@
 require "./requires"
 
 module Minerals
-  extend self
+  PATCHES = ""
+  NUL = 0u8
 
   macro this
     self.class
-  end
-
-  macro uppercase?(obj)
-    ((s = {{obj}}.to_s).upcase == s)
-  end
-
-  macro downcase?(obj)
-    ((s = {{obj}}.to_s).downcase == s)
-  end
-
-  # Returns the class of the object if it is not already a class.
-  macro to_class(obj)
-    obj.class unless obj.is_a?(::Object.class)
-  end
-
-  macro pvar(stmt)
-    puts "{{ stmt }}:\n  #{ {{ stmt }}.pretty_inspect }"
-  end
-
-  macro pvar(*stmts)
-    {% for stmt, _ in stmts %}
-      puts "{{ stmt }}:\n  #{ {{ stmt }}.pretty_inspect }"
-    {% end %}
-  end
-
-  macro env_exists?(key)
-    !(ENV[{{ key }}]?.nil? || Env[{{ key }}]? == "")
-  end
-
-  def s_to_b?(
-      s : ::String,
-      case_sensitive : ::Bool = true,
-      truthy : Array(String) = ["true", "True"],
-      falsy : Array(String) = ["false", "False"]
-    ) : ::Bool?
-    if case_sensitive
-      truthy.each { |word| return true if word == s }
-      falsy.each { |word| return false if word == s }
-    else
-      s = s.downcase
-      return true if truthy.any?(s)
-      return false if falsy.any?(s)
-    end
-
-    return nil
-  end
-
-  def s_to_b(*args, **kwargs) : ::Bool
-    result = s_to_b?(*args, **kwargs)
-    if result.nil?
-      raise ::Exception::TypeCastError.new("cast from String to Bool failed")
-    else
-      result
-    end
-  end
-
-  # for use in compile-time expressions
-  def env_to_b(key : ::String) : ::Bool
-    value = ENV[key]?.try &.downcase || "false"
-    return false if value == "false"
-    return true if value == "true"
-    raise ::TypeCastError.new("cast to Bool failed: #{ENV.[key]? || "false"}")
   end
 
   def extract(obj, &)
@@ -79,35 +18,19 @@ module Minerals
     with obj yield
   end
 
-  macro mcall(obj, *methods)
-    { {% for method, _ in methods[...-1] %} {{ obj }}.{{ method }}, {% end %} {{ obj }}.{{ methods[-1] }} }
+  macro noimplement(*args)
+    def {{ *args }}
+      raise ::NotImplementedError.new({% @def.try &.name || @caller.try &.first.try &.name || "" %})
+    end
   end
 
-  macro mncall(obj, *methods)
-    { {% for method, _ in methods[...-1] %} {{ method.id.split('.').first }}: {{ obj }}.{{ method }}, {% end %} {{ methods[-1].id.split('.').first }}: {{ obj }}.{{ methods[-1] }} }
-  end
-
-  macro mnget(obj, *members)
-    { {% for member, _ in members[...-1] %} {{ member.id.split('.').first }}: {{ obj }}[{{ member.id.stringify }}], {% end %} {{ members[-1].id.split('.').first }}: {{ obj }}[{{ members[-1].id.stringify }}] }
-  end
-
-  macro not_implemented
-    raise ::NotImplementedError.new({% @def.try &.name || @caller.try &.first.try &.name || "" %})
-  end
-
-  def to_json(obj) : String
-    String::Builder.build { |io|
-      builder = JSON::Builder.new(io)
-      builder.start_document
-      builder.indent=2
-      obj.to_json(builder)
-      builder.end_document
-      builder.flush
-    }
+  # Returns the class of the object if it is not already a class.
+  macro to_class(obj)
+    obj.class unless obj.is_a?(::Object.class)
   end
 end
 
-MINERALS_TOPLEVEL = ENV["MINERALS_TOPLEVEL"] ||= ""
-{% if MINERALS_TOPLEVEL != "" %}
+require "./patch"
+require "./lowlevel/ref"
+include Minerals::Patch
 include Minerals
-{% end %}

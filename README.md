@@ -1,6 +1,8 @@
 # Minerals
 
-A collection of utilities and patches that extend the functionality of crystal
+A collection of utilities and patches that extend the functionality of crystal.
+
+**Highly volatile, depend on a specific version!**
 
 ## Installation
 
@@ -16,29 +18,26 @@ A collection of utilities and patches that extend the functionality of crystal
 
 ## Usage
 
-### As a module
+Require the relevant packages.
+The base `minerals` package is required,
+and it automatically patches a minimal selection
+of utilities into the top level scope,
+but it does not touch any types.
 
-```crystal
+```cr
 require "minerals"
+require "minerals/lowlevel/static_array"
 ```
 
-### With full featureset
-```crystal
-ENV["MINERALS_TOPLEVEL"] ||= "true"
-ENV["MINERALS_PATCH"] ||= "true"
-require "minerals"
+Then, either use as modules:
+```cr
+Minerals::StaticArray.from_s("hello", 5)
 ```
 
-### With methods in top-level scope
-
-```crystal
-ENV["MINERALS_TOPLEVEL"] ||= "true"
-require "minerals"
+...or patch it into crystal:
+```cr
+patch Minerals::StaticArray
 ```
-
-### With patches to objects
-
-```crystal
-ENV["MINERALS_PATCH"] ||= "true"
-require "minerals"
+```cr
+StaticArray.from_s("hello", 5)
 ```

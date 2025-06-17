@@ -1,11 +1,5 @@
 class ::String
-  def uppercase? : ::Bool
-    Minerals.uppercase?(self)
-  end
-
-  def lowercase? : ::Bool
-    Minerals.lowercase?(self)
-  end
+  include Minerals::String
 
   def to_b(*args, **kwargs) : ::Bool
     Minerals.s_to_b(self, *args, **kwargs)

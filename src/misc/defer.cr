@@ -1,3 +1,18 @@
+# MUTEX = Mutex.new
+#
+# def write_lines; Defer.scope do
+#   MUTEX.lock
+#   defer { MUTEX.unlock }
+#
+#   file = File.open("somefile.txt", "w")
+#   defer { file.close }
+#
+#   10.times do |i|
+#     file.write "Line: #{i}"
+#   end
+#
+#   puts "lines written"
+# end; end
 module Minerals::Defer
   @@indexes = [] of Int32
   @@defers = [] of ->
@@ -17,20 +32,4 @@ module Minerals::Defer
       @@defers.pop.call
     end
   end
-
-  # MUTEX = Mutex.new
-  #
-  # def write_lines; Defer.scope do
-  #   MUTEX.lock
-  #   defer { MUTEX.unlock }
-  #
-  #   file = File.open("somefile.txt", "w")
-  #   defer { file.close }
-  #
-  #   10.times do |i|
-  #     file.write "Line: #{i}"
-  #   end
-  #
-  #   puts "lines written"
-  # end; end
 end

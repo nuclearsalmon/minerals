@@ -1,6 +1,7 @@
 module Minerals::Concurrency
   extend self
-  
+  PATCHES = ""
+
   def async(&block)
     p "1"
     channel = Channel(Nil).new
