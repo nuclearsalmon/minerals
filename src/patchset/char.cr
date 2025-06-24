@@ -1,5 +1,5 @@
 struct ::Char
-  def lowerase? : Bool
+  def lowercase? : Bool
     !uppercase?
   end
 end
