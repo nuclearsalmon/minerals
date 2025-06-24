@@ -1,7 +1,7 @@
 require "./dir_iterator"
 require "./reverse_index_iterator"
 
-module Minerals
+module Minerals::Iteration
   extend self
 
   def each_file(*args, **kwargs)

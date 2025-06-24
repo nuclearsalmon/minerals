@@ -1,3 +1,5 @@
+require "../misc/string"
+
 class ::String
   include Minerals::String
 
