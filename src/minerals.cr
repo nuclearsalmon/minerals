@@ -20,10 +20,9 @@ module Minerals
     with obj yield
   end
 
-  macro noimplement(&block)
-    def {{ &block }}
-      raise ::NotImplementedError.new({% @def.try &.name || @caller.try &.first.try &.name || "" %})
-    end
+  # Returns the class of the object if it is not already a class.
+  macro to_class(obj)
+    {{ obj }}.class unless {{ obj }}.is_a?(::Object.class)
   end
 
   macro not_implemented(name)
@@ -68,23 +67,15 @@ module Minerals
     {% if name.is_a?(TypeDeclaration) %}
       {% var_name = name.var.id %}
       {% type = name.type %}
-    {% elsif name.is_a?(Assign) %}
-      {% var_name = name.target %}
-      {% type = nil %}
     {% else %}
       {% var_name = name.id %}
       {% type = nil %}
     {% end %}
 
-    private module ClassMethods__%classmethods
+    private module ClassMethods%class_methods
       abstract def {{var_name}} {% if type %} : {{type}} {% end %}
     end
-    extend ClassMethods__%classmethods
-  end
-
-  # Returns the class of the object if it is not already a class.
-  macro to_class(obj)
-    {{ obj }}.class unless {{ obj }}.is_a?(::Object.class)
+    extend ClassMethods%class_methods
   end
 end
 
