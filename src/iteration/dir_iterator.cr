@@ -10,7 +10,7 @@ module Minerals
 
     def initialize(
       dir_path : ::Path | ::String,
-      @allow_symlinks : Bool = true,
+      @allow_symlinks : ::Bool = true,
       @exclude : ::Array(::String) = [] of ::String
     )
       @dir_path = dir_path.is_a?(::String) ? dir_path : dir_path.to_s
@@ -22,6 +22,41 @@ module Minerals
       @root_path = ::Path.new(::File.realpath(@dir_path)).to_posix.to_s
       @iter = ::Dir.new(@dir_path).each_child
       @exclude.reject!(".").reject!("")
+    end
+
+    def self.new(
+      dir_paths : Iterable(::Path | ::String),
+      allow_symlinks : ::Bool = true,
+      exclude : ::Array(::String) = [] of ::String
+    )
+      dir_paths.compact_map {|dir_path|
+        if ::File.directory?(dir_path)
+          {{ @type }}.new(dir_path, allow_symlinks: allow_symlinks, exclude: exclude)
+        elsif !self.exclude?(exclude, dir_path.to_s)
+          ::Path.new(dir_path)
+        end
+      }.flatten
+    end
+
+    protected def self.exclude?(exclude : ::Array(::String), elem : ::String) : ::Bool
+      exclude.each { |excl|
+        excl = excl.strip
+
+        if excl.starts_with?("!")
+          excl = excl.lchop("!")
+          if excl.starts_with?("/")
+            excl = ".#{excl}"
+          else
+            excl = "**/#{excl}"
+          end
+          excl = "#{excl}**" if excl.ends_with?("/")
+
+          return false if ::File.match?(excl, elem)
+        else
+          return true if ::File.match?(excl, elem)
+        end
+      }
+      false
     end
 
     def next : ::Path | ::Iterator::Stop
@@ -42,50 +77,13 @@ module Minerals
           skip = false
           if @allow_symlinks && ::File.symlink?(elem)
             elem = ::File.realpath(elem)
+            # avoid recursive symlinks
             if ::Path.new(elem).to_posix.to_s.includes?(@root_path)
               skip = true
             end
           end
 
-          unless skip
-            @exclude.each { |excl|
-              excl = excl.strip
-              next if excl.starts_with?("!")
-
-              if excl.starts_with?("/")
-                excl = ".#{excl}"
-              else
-                excl = "**/#{excl}"
-              end
-              excl = ("#{excl}**") if excl.ends_with?("/")
-
-              #puts "#{excl}: #{elem} = #{::File.match?(excl, elem)}"
-              if ::File.match?(excl, elem)
-                skip = true
-                break
-              end
-            }
-          end
-
-          if skip
-            @exclude.each { |excl|
-              excl = excl.strip
-              next unless excl.starts_with?("!")
-
-              excl = excl.lchop("!")
-              if excl.starts_with?("/")
-                excl = ".#{excl}"
-              else
-                excl = "**/#{excl}"
-              end
-              excl = "#{excl}**" if excl.ends_with?("/")
-
-              if ::File.match?(excl, elem)
-                skip = false
-                break
-              end
-            }
-          end
+          skip = self.class.exclude?(@exclude, elem) unless skip
 
           unless skip
             if ::File.directory?(elem)
