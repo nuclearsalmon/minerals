@@ -1,5 +1,5 @@
 module Minerals
-  struct TriState
+  struct Tri
     @states : ::Tuple(::Symbol, ::Symbol, ::Symbol)
     property state : ::Bool?
 
@@ -11,25 +11,22 @@ module Minerals
       state1 : ::Symbol,
       state2 : ::Symbol,
       state3 : ::Symbol,
-      default : ::Symbol? = nil
+      initial_state : ::Symbol? = nil
     )
       @states = {state1, state2, state3}
-      @state = default.nil? ? nil : state(default)
+      @state = initial_state.nil? ? nil : state(initial_state)
     end
 
     def self.new_(*args, **kwargs) : self
       {{@type}}.new(*args, **kwargs)
     end
 
-    macro new(state1, state2, state3, default_state = nil)
-      begin
-        state1 = :{{ state1.id.stringify.camelcase(lower: true).id }}
-        state2 = :{{ state2.id.stringify.camelcase(lower: true).id }}
-        state3 = :{{ state3.id.stringify.camelcase(lower: true).id }}
-        default_state = {{ default_state.nil? }} ? nil : :{{ default_state.id.stringify.camelcase(lower: true).id}}
-
-        TriState.new_(state1, state2, state3, default_state)
-      end
+    macro new(state1, state2, state3, initial_state = nil)
+      state1 = :{{ state1.id.stringify.camelcase(lower: true).id }}
+      state2 = :{{ state2.id.stringify.camelcase(lower: true).id }}
+      state3 = :{{ state3.id.stringify.camelcase(lower: true).id }}
+      initial_state = {{ initial_state.nil? }} ? nil : :{{ initial_state.id.stringify.camelcase(lower: true).id}}
+      Tri.new_(state1, state2, state3, initial_state)
     end
 
     macro method_missing(call)
@@ -121,24 +118,16 @@ module Minerals
     end
 
     def <=>(other : ::Bool?)
-      case {@state, other}
-      in {false, false}, {true, true}, {nil, nil}
-        0
-      in {false, nil}, {false, true}, {nil, true}
-        -1
-      in {nil, false}, {true, false}, {true, nil}
-        1
-      end
+      self.to_i <=> self.class.to_i(other)
     end
 
     def <=>(other : self)
-      self <=> other.state
+      self.to_i <=> other.to_i
     end
 
     def <=>(other : ::Int8)
-      other = {-1, {other, 1}.min}.max  # clamp
-      other_b : ::Bool? = raw_states[other]
-      self <=> other_b
+      other_i = {-1_i8, {other.to_i8, 1_i8}.min}.max.to_i8  # clamp
+      self.to_i <=> other_i
     end
   end
 end
