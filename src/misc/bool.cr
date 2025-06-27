@@ -1,11 +1,11 @@
 module Minerals::Bool
   extend self
 
-  def s_to_b?(
+  def from_s?(
       s : ::String,
       case_sensitive : ::Bool = true,
-      truthy : Array(String) = ["true", "True"],
-      falsy : Array(String) = ["false", "False"]
+      truthy : ::Array(::String) = ["true", "True"],
+      falsy : ::Array(::String) = ["false", "False"]
     ) : ::Bool?
     if case_sensitive
       truthy.each { |word| return true if word == s }
@@ -19,7 +19,7 @@ module Minerals::Bool
     return nil
   end
 
-  def s_to_b(*args, **kwargs) : ::Bool
+  def from_s(*args, **kwargs) : ::Bool
     result = s_to_b?(*args, **kwargs)
     if result.nil?
       raise ::Exception::TypeCastError.new("cast from String to Bool failed")

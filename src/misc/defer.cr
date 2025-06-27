@@ -14,7 +14,7 @@
 #   puts "lines written"
 # end; end
 module Minerals::Defer
-  @@indexes = [] of Int32
+  @@indexes = [] of ::Int32
   @@defers = [] of ->
 
   @[AlwaysInline]

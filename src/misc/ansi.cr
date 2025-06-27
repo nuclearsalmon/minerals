@@ -24,15 +24,15 @@ module Minerals::ANSI
   #        payload `ΔΩÔ`
   #        as more than three characters and Unicode is
   #        thus not supported.
-  def terminal_underline(str : String) : String
-    "\e[4m\x02" + str + "\x03\e[24m"
+  def extended_underline(str : ::String) : ::String
+    "\e[4m\x02#{str}\x03\e[24m"
   end
 
-  def bold(str : String) : String
-    "\e[1m" + str + "\e[22m"
+  def bold(str : ::String) : ::String
+    "\e[1m#{str}\e[22m"
   end
 
-  def invert(str : String) : String
-    "\e[7m" + str + "\e[27m"
+  def invert(str : ::String) : ::String
+    "\e[7m#{str}\e[27m"
   end
 end
