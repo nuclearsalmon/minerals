@@ -32,10 +32,11 @@ module Minerals
       allow_symlinks : ::Bool = true,
       filters : ::Array(::String) = [] of ::String
     )
+      normalized_filters = Minerals::Path.normalize_filters(filters)
       dir_paths.compact_map {|dir_path|
         if ::File.directory?(dir_path)
           new(dir_path, allow_symlinks: allow_symlinks, filters: filters)
-        elsif !self.filter?(filters, dir_path.to_s)
+        elsif !self.filter?(normalized_filters, dir_path.to_s)
           ::Path.new(dir_path)
         end
       }.flatten
