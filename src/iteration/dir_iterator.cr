@@ -1,3 +1,5 @@
+require "../misc/path"
+
 module Minerals
   class DirIterator
     include ::Iterator(::Path)
@@ -6,12 +8,12 @@ module Minerals
     @root_path : ::String
     @iter : ::Iterator(::String)
     @dir_queue = ::Array(::String).new
-    @exclude : ::Array(::String)
+    @normalized_filters : ::Array({::String, ::Bool})
 
     def initialize(
       dir_path : ::Path | ::String,
       @allow_symlinks : ::Bool = true,
-      @exclude : ::Array(::String) = [] of ::String
+      filters : ::Array(::String) = [] of ::String
     )
       @dir_path = dir_path.is_a?(::String) ? dir_path : dir_path.to_s
 
@@ -21,42 +23,37 @@ module Minerals
 
       @root_path = ::Path.new(::File.realpath(@dir_path)).to_posix.to_s
       @iter = ::Dir.new(@dir_path).each_child
-      @exclude.reject!(".").reject!("")
+      {"./", ".", ""}.each { |x| filters.reject!(x) }
+      @normalized_filters = Minerals::Path.normalize_filters(filters)
     end
 
     def self.new(
-      dir_paths : Iterable(::Path | ::String),
+      dir_paths : ::Iterable(::Path | ::String),
       allow_symlinks : ::Bool = true,
-      exclude : ::Array(::String) = [] of ::String
+      filters : ::Array(::String) = [] of ::String
     )
       dir_paths.compact_map {|dir_path|
         if ::File.directory?(dir_path)
-          {{ @type }}.new(dir_path, allow_symlinks: allow_symlinks, exclude: exclude)
-        elsif !self.exclude?(exclude, dir_path.to_s)
+          new(dir_path, allow_symlinks: allow_symlinks, filters: filters)
+        elsif !self.filter?(filters, dir_path.to_s)
           ::Path.new(dir_path)
         end
       }.flatten
     end
 
-    protected def self.exclude?(exclude : ::Array(::String), elem : ::String) : ::Bool
-      exclude.each { |excl|
-        excl = excl.strip
-
-        if excl.starts_with?("!")
-          excl = excl.lchop("!")
-          if excl.starts_with?("/")
-            excl = ".#{excl}"
-          else
-            excl = "**/#{excl}"
-          end
-          excl = "#{excl}**" if excl.ends_with?("/")
-
-          return false if ::File.match?(excl, elem)
-        else
-          return true if ::File.match?(excl, elem)
-        end
+    protected def self.filter?(
+      filters : ::Array({::String, ::Bool}),
+      elem : ::String
+    ) : ::Bool
+      filters.each { |filter, positive|
+        res = ::File.match?(filter, elem)
+        return !positive if res
       }
-      false
+      return false
+    end
+
+    protected def filter?(elem : ::String) : ::Bool
+      self.class.filter?(@normalized_filters, elem)
     end
 
     def next : ::Path | ::Iterator::Stop
@@ -72,7 +69,7 @@ module Minerals
           end
         else
           elem_p = ::Path.new(@dir_path) / elem
-          elem = elem_p.to_posix.to_s
+          elem = elem_p.normalize.to_posix.to_s
 
           skip = false
           if @allow_symlinks && ::File.symlink?(elem)
@@ -82,8 +79,7 @@ module Minerals
               skip = true
             end
           end
-
-          skip = self.class.exclude?(@exclude, elem) unless skip
+          skip = self.filter?(elem) unless skip
 
           unless skip
             if ::File.directory?(elem)

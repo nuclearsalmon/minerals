@@ -1,3 +1,5 @@
+require "minerals/misc/bool"
+
 module Minerals::String
   PATCHES = "::String"
 
@@ -10,8 +12,6 @@ module Minerals::String
   end
 
   macro included
-    require "minerals/misc/bool"
-
     def upcase? : ::Bool
       Minerals::String.upcase?(self)
     end

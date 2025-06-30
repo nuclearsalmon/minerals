@@ -1,5 +1,5 @@
 require "./minerals"
 
-include Minerals
 include Minerals::Patch
-include Minerals::Late
+patch Minerals
+include Minerals::Late  # incl, because this is part of core

@@ -1,4 +1,6 @@
 module Minerals::Iterator
+  PATCHES = "::Iterator"
+
   macro included
     @[AlwaysInline]
     def select_range(range : Range)

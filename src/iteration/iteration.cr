@@ -1,5 +1,4 @@
-require "./dir_iterator"
-require "./reverse_index_iterator"
+require "./*"
 
 module Minerals::Iteration
   extend self
