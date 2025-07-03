@@ -28,5 +28,10 @@ module Minerals::Iterator
     def skip!(n : Int)
       n.times { self.next }
     end
+
+    @[AlwaysInline]
+    def next? : T? forall T
+      (x = self.next).is_a?(::Iterator::Stop) ? nil : x.as(T)
+    end
   end
 end
